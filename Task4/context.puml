@@ -27,4 +27,5 @@ Rel(abs, sms_gate, "Сообщения клиентам", "async, mq")
 Rel(abs_deposit, abs, "Обмен данными", "sync, rest")
 Rel(manager, abs_deposit, "Решения банка", "sync, rest")
 Rel_Back(abs_deposit, call_center, "Заявки", "sync, rest")
+Rel(abs_deposit, call_center, "Ставки", "async, sftp")
 @enduml
