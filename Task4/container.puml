@@ -1,0 +1,51 @@
+@startuml context
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Контейнеры депозитарной системы АБС банка «Стандарт»
+
+SHOW_PERSON_OUTLINE()
+LAYOUT_WITH_LEGEND()
+
+Person(manager, "Сотрудник отдела депозитов", "Оператор")
+System(abs, "АБС", "Автоматизированная банковская система")
+Person_Ext(user, "Клиент", "Пользователь")
+ContainerQueue(events, "Горизонтальное взаимодействие служб", "Kafka", "event sourcing bus")
+
+Boundary(deposit, контейнеры депозитарной системы) {
+  Container("ui_mf_host", "Module Federation Host", "JavaScript, React, Module Federation Host", "frontend\nbuild-time compositor")
+
+  Container("ui_main_mf_build", "Интернет-банк, основной UI", "TypeScript, React, Module Federation expose", microfrontend)
+  Container("ui_deposit_mf_build", "Интернет-банк, UI депозитов", "JavaScript, React, Module Federation expose", microfrontend)
+  Container("ui_deposit_manager", "UI депозитов оператора банка", "TypeScript, React", frontend)
+
+  Container("kong", "API gateaway", "Kong", "reverse proxy\nrate limiting, authentication, load balancing")
+
+  Container("deposit_back", "Процессинг депозитов", "Java, Spring", backend app)
+  ContainerDb("deposit_db", "БД депозитов", "PostgreSQL", "storage")
+}
+
+Container("deposit_back_sftp", "SFTP-шлюз депозитов", "Java, Spring", external gate app)
+System_Ext(system_call_center, "Колл-центр", "Внешняя информационная система")
+
+Rel(user, ui_mf_host, "browser")
+Rel(ui_mf_host, ui_deposit_mf_build, "request", "sync, rest")
+Rel(ui_mf_host, ui_main_mf_build, "request", "sync, rest")
+
+Rel(ui_main_mf_build, kong, "request", "sync, rest")
+Rel(ui_deposit_mf_build, kong, "request", "sync, rest")
+Rel(ui_deposit_manager, kong, "request", "sync, rest")
+
+Rel(kong, deposit_back, "request", "sync, rest")
+Rel_R(kong, abs, "request", "sync, rest")
+Rel(deposit_back, deposit_db, , "socket")
+
+Rel_D(manager, "ui_deposit_manager", "browser")
+
+Rel_R(deposit_back, events, event, "async, kafka")
+Rel_U(events, abs, event, "async, kafka")
+
+Rel_L(deposit_back_sftp, system_call_center, ставки, "async, sftp")
+Rel_U(deposit_back_sftp, events, ставки, "async, kafka")
+
+@enduml

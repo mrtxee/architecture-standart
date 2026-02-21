@@ -1,0 +1,31 @@
+@startuml context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title Контекст депозитарной системы АБС банка «Стандарт»
+
+SHOW_PERSON_OUTLINE()
+LAYOUT_WITH_LEGEND()
+
+Person_Ext(guest, "Гость", "Потенциальный клиент")
+Person_Ext(user, "Пользователь", "Клиент")
+
+Boundary(system, "АБС «Банк Стандарт»", "ABS") {
+	Person(manager, "Сотрудник отдела депозитов")
+  System(ui, "Интернет-банк", "Система интернет-банкинга")
+  System(abs_deposit, "Депозиты", "Система управления депозитами")
+  System(abs, "АБС", "Автоматизированная банковская система")
+}
+
+System_Ext(sms_gate, "SMS-шлюз", "Процессинг сообщений")
+System_Ext(call_center, "Колл-центр", "Процессинг звонков")
+
+Rel_D(user, ui, "Заявка", "sync, rest")
+Rel(user, call_center, "Заявка / консультация")
+Rel(guest, call_center, "Заявка / консультация")
+Rel(ui, abs_deposit, "Запросы", "sync, rest")
+Rel(abs, sms_gate, "Сообщения клиентам", "async, mq")
+Rel(abs_deposit, abs, "Обмен данными", "sync, rest")
+Rel(manager, abs_deposit, "Решения банка", "sync, rest")
+Rel_Back(abs_deposit, call_center, "Заявки", "sync, rest")
+Rel(abs_deposit, call_center, "Ставки", "async, sftp")
+@enduml
